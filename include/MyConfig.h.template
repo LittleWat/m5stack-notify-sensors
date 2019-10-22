@@ -1,0 +1,15 @@
+const char* wifi_ssid = "xxx";
+const char* wifi_pass = "xxx";
+const char* smtp_username = "xxx";
+const char* smtp_password = "xxx";
+const char* smtp_from_address = "xxx@gmail.com";
+const int smtp_port = 465;
+const char* smtp_hostname = "smtp.gmail.com";
+
+const char* to_address = "xxx@gmail.com";
+const char* subject = "空調調整依頼";
+
+const int temperature_upper_limit = 28;
+const int temperature_lower_limit = 15;
+const int minimum_email_interval_seconds = 60 * 10;  // 10 minutes
+const int sensing_interval_milliseconds = 5000;      // should be more than 1500
