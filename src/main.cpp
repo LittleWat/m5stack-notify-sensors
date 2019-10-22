@@ -1,5 +1,10 @@
 #include <M5Stack.h>
+#include <Mailer.h>
 #include <SimpleDHT.h>
+#include "MyConfig.h"
+
+Mailer mail(smtp_username, smtp_password, smtp_from_address, smtp_port,
+            smtp_hostname);
 
 // ref: http://shikarunochi.matrix.jp/?p=2586
 // 抵抗は https://www.switch-science.com/catalog/818/　を使っていたら、いらない
@@ -17,6 +22,16 @@ void setup() {
   M5.Power.begin();
 
   M5.Lcd.setTextSize(4);
+
+  log_i("Connecting to %s", wifi_ssid);
+  WiFi.begin(wifi_ssid, wifi_pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    log_i("wait...");
+    delay(1000);
+  }
+  log_i("WiFi connected");
+  log_i("IP Address: %s", WiFi.localIP().toString().c_str());
+  mail.send(to_address, subject, content);
 }
 
 void loop() {
@@ -54,5 +69,5 @@ void loop() {
   Serial.println(" H");
 
   // DHT11 sampling rate is 1HZ.
-  delay(1500);
+  delay(5000);  // more than 150
 }

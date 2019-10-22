@@ -1,0 +1,11 @@
+const char* wifi_ssid = "xxx";
+const char* wifi_pass = "xxx";
+const char* smtp_username = "xxx";
+const char* smtp_password = "xxx";
+const char* smtp_from_address = "xxx@gmail.com";
+const int smtp_port = 465;
+const char* smtp_hostname = "smtp.gmail.com";
+
+const char* to_address = "xxx@gmail.com";
+const char* subject = "From ESP32";
+const char* content = "Hello, this is ESP32.";
