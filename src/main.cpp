@@ -1,6 +1,8 @@
 #include <M5Stack.h>
 #include <Mailer.h>
 #include <SimpleDHT.h>
+#include <ezTime.h>
+
 #include "MyConfig.h"
 
 Mailer mail(smtp_username, smtp_password, smtp_from_address, smtp_port,
@@ -17,21 +19,26 @@ Mailer mail(smtp_username, smtp_password, smtp_from_address, smtp_port,
 int pinDHT11 = G5;
 SimpleDHT11 dht11(pinDHT11);
 
+Timezone Tokyo;
+time_t last_emailed_at;
+
+String email_content;
+
 void setup() {
   M5.begin();
   M5.Power.begin();
 
-  M5.Lcd.setTextSize(4);
+  M5.Lcd.setTextSize(3);
 
   log_i("Connecting to %s", wifi_ssid);
   WiFi.begin(wifi_ssid, wifi_pass);
-  while (WiFi.status() != WL_CONNECTED) {
-    log_i("wait...");
-    delay(1000);
-  }
+  waitForSync();
   log_i("WiFi connected");
   log_i("IP Address: %s", WiFi.localIP().toString().c_str());
-  mail.send(to_address, subject, content);
+
+  Tokyo.setLocation("Asia/Tokyo");
+  Serial.println("Asia/Tokyo time: " + Tokyo.dateTime());
+  last_emailed_at = Tokyo.now();
 }
 
 void loop() {
@@ -39,7 +46,6 @@ void loop() {
   Serial.println("=================================");
   Serial.println("Sample DHT11...");
 
-  M5.Lcd.clearDisplay();
   M5.Lcd.setCursor(0, 0);
 
   // read without samples.
@@ -68,6 +74,31 @@ void loop() {
   Serial.print((int)humidity);
   Serial.println(" H");
 
+  // 経過時間を計算しそれが一定以上、かつ温度が閾値を超えていたらメール送信
+  auto elapsed_seconds = difftime(Tokyo.now(), last_emailed_at);
+
+  email_content = "温度: ";
+  email_content += (int)temperature;
+  email_content += "℃、湿度: ";
+  email_content += (int)humidity;
+  email_content += "％です。\n";
+  Serial.println(email_content);
+
+  log_d("経過時間：%.1f秒", elapsed_seconds);
+  if (elapsed_seconds > minimum_email_interval_seconds) {
+    if (temperature > temperature_upper_limit) {
+      mail.send(to_address, subject,
+                email_content + "暑いので冷房を強くしてください。");
+    } else if (temperature < temperature_lower_limit) {
+      mail.send(to_address, subject,
+                email_content + "寒いので暖房を強くしてください。");
+    }
+    M5.Lcd.println("");
+    M5.Lcd.println("Emailed at ");
+    M5.Lcd.println(Tokyo.dateTime());
+    last_emailed_at = Tokyo.now();
+  }
+
   // DHT11 sampling rate is 1HZ.
-  delay(5000);  // more than 150
+  delay(sensing_interval_milliseconds);
 }
