@@ -5,12 +5,8 @@
 
 #include "MyConfig.h"
 
-Mailer mail(smtp_username, smtp_password, smtp_from_address, smtp_port,
-            smtp_hostname);
-
 // ref: http://shikarunochi.matrix.jp/?p=2586
 // 抵抗は https://www.switch-science.com/catalog/818/　を使っていたら、いらない
-
 // for DHT11,
 //      VCC: 5V or 3V
 //      GND: GND
@@ -19,10 +15,11 @@ Mailer mail(smtp_username, smtp_password, smtp_from_address, smtp_port,
 int pinDHT11 = G5;
 SimpleDHT11 dht11(pinDHT11);
 
+Mailer mail(smtp_username, smtp_password, smtp_from_address, smtp_port,
+            smtp_hostname);
 Timezone Tokyo;
 time_t last_emailed_at;
-
-String email_content;
+void send_email(const String content);
 
 void setup() {
   M5.begin();
@@ -77,7 +74,7 @@ void loop() {
   // 経過時間を計算しそれが一定以上、かつ温度が閾値を超えていたらメール送信
   auto elapsed_seconds = difftime(Tokyo.now(), last_emailed_at);
 
-  email_content = "温度: ";
+  String email_content = "温度: ";
   email_content += (int)temperature;
   email_content += "℃、湿度: ";
   email_content += (int)humidity;
@@ -87,18 +84,21 @@ void loop() {
   log_d("経過時間：%.1f秒", elapsed_seconds);
   if (elapsed_seconds > minimum_email_interval_seconds) {
     if (temperature > temperature_upper_limit) {
-      mail.send(to_address, subject,
-                email_content + "暑いので冷房を強くしてください。");
+      send_email(email_content + "暑いので冷房を強くしてください。");
     } else if (temperature < temperature_lower_limit) {
-      mail.send(to_address, subject,
-                email_content + "寒いので暖房を強くしてください。");
+      send_email(email_content + "寒いので暖房を強くしてください。");
     }
-    M5.Lcd.println("");
-    M5.Lcd.println("Emailed at ");
-    M5.Lcd.println(Tokyo.dateTime());
-    last_emailed_at = Tokyo.now();
   }
-
   // DHT11 sampling rate is 1HZ.
   delay(sensing_interval_milliseconds);
+}
+
+void send_email(const String content) {
+  mail.send(to_address, subject, content);
+
+  M5.Lcd.println("");
+  M5.Lcd.println("Emailed at ");
+  M5.Lcd.println(Tokyo.dateTime());
+
+  last_emailed_at = Tokyo.now();
 }
