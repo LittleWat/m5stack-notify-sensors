@@ -1,5 +1,7 @@
 # M5Stack Gray Sensors Notifier by Gmail
 
+[Qiita の記事はこちら](https://qiita.com/LittleWat/items/16a0ef5c3ea46f8b1c2d)
+
 ## Preparation
 
 ### Environment
